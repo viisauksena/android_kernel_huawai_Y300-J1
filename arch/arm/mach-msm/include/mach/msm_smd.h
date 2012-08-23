@@ -484,6 +484,16 @@ static inline int smd_module_init_notifier_unregister(struct notifier_block *nb)
 	return -ENODEV;
 }
 
+static inline int smd_module_init_notifier_register(struct notifier_block *nb)
+{
+	return -ENODEV;
+}
+
+static inline int smd_module_init_notifier_unregister(struct notifier_block *nb)
+{
+	return -ENODEV;
+}
+
 static inline int __init msm_smd_init(void)
 {
 	return 0;
