@@ -322,6 +322,7 @@ config ARCH_MSM9625
 	select MSM_GPIOMUX
 	select MULTI_IRQ_HANDLER
 	select GPIO_MSM_V2
+	select CPU_HAS_L2_PMU
 
 endmenu
 
