@@ -2656,7 +2656,7 @@ static int power_cut_emulated(struct ubifs_info *c, int lnum, int write)
 
 static void cut_data(const void *buf, unsigned int len)
 {
-	unsigned int from, to, i, ffs = chance(1, 2);
+	unsigned int from, to, ffs = chance(1, 2);
 	unsigned char *p = (void *)buf;
 
 	from = prandom_u32() % (len + 1);
@@ -2670,11 +2670,9 @@ static void cut_data(const void *buf, unsigned int len)
 			   ffs ? "0xFFs" : "random data");
 
 	if (ffs)
-		for (i = from; i < to; i++)
-			p[i] = 0xFF;
+		memset(p + from, 0xFF, to - from);
 	else
-		for (i = from; i < to; i++)
-			p[i] = random32() % 0x100;
+		prandom_bytes(p + from, to - from);
 }
 
 int dbg_leb_write(struct ubifs_info *c, int lnum, const void *buf,
