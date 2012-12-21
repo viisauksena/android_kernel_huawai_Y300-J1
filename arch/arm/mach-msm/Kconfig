@@ -310,6 +310,7 @@ config ARCH_MSM8625
 	select MIGHT_HAVE_CACHE_L2X0
 	select ARM_HAS_SG_CHAIN
 	select DONT_MAP_HOLE_AFTER_MEMBANK0
+	select CPU_HAS_L2_PMU
 
 config ARCH_MSM9625
 	bool "MSM9625"
@@ -394,6 +395,7 @@ config ARCH_MSM7X27A
 	select ARCH_MSM_CORTEXMP
 	select MIGHT_HAVE_CACHE_L2X0
 	select ARM_HAS_SG_CHAIN
+	select CPU_HAS_L2_PMU
 
 config  MSM_VIC
 	bool
