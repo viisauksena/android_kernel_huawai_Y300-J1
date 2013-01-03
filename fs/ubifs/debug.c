@@ -2556,7 +2556,7 @@ error_dump:
 
 static inline int chance(unsigned int n, unsigned int out_of)
 {
-	return !!((random32() % out_of) + 1 <= n);
+	return !!((prandom_u32() % out_of) + 1 <= n);
 
 }
 
@@ -2574,13 +2574,13 @@ static int power_cut_emulated(struct ubifs_info *c, int lnum, int write)
 			if (chance(1, 2)) {
 				d->pc_delay = 1;
 				/* Fail withing 1 minute */
-				delay = random32() % 60000;
+				delay = prandom_u32() % 60000;
 				d->pc_timeout = jiffies;
 				d->pc_timeout += msecs_to_jiffies(delay);
 				ubifs_warn("failing after %lums", delay);
 			} else {
 				d->pc_delay = 2;
-				delay = random32() % 10000;
+				delay = prandom_u32() % 10000;
 				/* Fail within 10000 operations */
 				d->pc_cnt_max = delay;
 				ubifs_warn("failing after %lu calls", delay);
@@ -2659,7 +2659,7 @@ static void cut_data(const void *buf, unsigned int len)
 	unsigned int from, to, i, ffs = chance(1, 2);
 	unsigned char *p = (void *)buf;
 
-	from = random32() % (len + 1);
+	from = prandom_u32() % (len + 1);
 	if (chance(1, 2))
 		to = random32() % (len - from + 1);
 	else
