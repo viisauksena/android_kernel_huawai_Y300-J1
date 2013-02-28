@@ -418,7 +418,10 @@ static void adb_release_work(struct work_struct *w)
 
 static int adb_open(struct inode *ip, struct file *fp)
 {
-	pr_info("adb_open\n");
+	static DEFINE_RATELIMIT_STATE(rl, 10*HZ, 1);
+
+	if (__ratelimit(&rl))
+		pr_info("adb_open\n");
 	if (!_adb_dev)
 		return -ENODEV;
 
@@ -438,7 +441,10 @@ static int adb_open(struct inode *ip, struct file *fp)
 
 static int adb_release(struct inode *ip, struct file *fp)
 {
-	pr_info("adb_release\n");
+	static DEFINE_RATELIMIT_STATE(rl, 10*HZ, 1);
+
+	if (__ratelimit(&rl))
+		pr_info("adb_release\n");
 
 	/*
 	 * When USB cable is plugged out, adb reader is unblocked and
