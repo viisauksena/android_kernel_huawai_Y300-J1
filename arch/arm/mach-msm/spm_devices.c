@@ -348,31 +348,11 @@ static int __devinit msm_spm_dev_probe(struct platform_device *pdev)
 	memset(&modes, 0,
 		(MSM_SPM_MODE_NR - 2) * sizeof(struct msm_spm_seq_entry));
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		goto fail;
-
-	spm_data.reg_base_addr = devm_ioremap(&pdev->dev, res->start,
-					resource_size(res));
-	if (!spm_data.reg_base_addr)
-		return -ENOMEM;
-
 	key = "qcom,core-id";
 	ret = of_property_read_u32(node, key, &val);
 	if (ret)
 		goto fail;
 	cpu = val;
-
-	key = "qcom,saw2-ver-reg";
-	ret = of_property_read_u32(node, key, &val);
-	if (ret)
-		goto fail;
-	spm_data.ver_reg = val;
-
-	key = "qcom,vctl-timeout-us";
-	ret = of_property_read_u32(node, key, &val);
-	if (!ret)
-		spm_data.vctl_timeout_us = val;
 
 	/* optional */
 	key = "qcom,vctl-port";
@@ -402,11 +382,34 @@ static int __devinit msm_spm_dev_probe(struct platform_device *pdev)
 		num_modes = ARRAY_SIZE(of_cpu_modes);
 		dev = &per_cpu(msm_cpu_spm_device, cpu);
 
-	} else {
+	} else if (cpu == 0xffff) {
 		mode_of_data = of_l2_modes;
 		num_modes = ARRAY_SIZE(of_l2_modes);
 		dev = &msm_spm_l2_device;
-	}
+	} else
+		return ret;
+
+	key = "qcom,saw2-ver-reg";
+	ret = of_property_read_u32(node, key, &val);
+	if (ret)
+		goto fail;
+	spm_data.ver_reg = val;
+
+	key = "qcom,vctl-timeout-us";
+	ret = of_property_read_u32(node, key, &val);
+	if (!ret)
+		spm_data.vctl_timeout_us = val;
+	else if (cpu == 0xffff)
+		goto fail;
+
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		goto fail;
+
+	spm_data.reg_base_addr = devm_ioremap(&pdev->dev, res->start,
+					resource_size(res));
+	if (!spm_data.reg_base_addr)
+		return -ENOMEM;
 
 	for (i = 0; i < num_modes; i++) {
 		key = mode_of_data[i].key;
