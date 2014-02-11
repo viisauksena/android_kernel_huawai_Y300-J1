@@ -1736,7 +1736,7 @@ static int msm_hs_startup(struct uart_port *uport)
 	/* Enable reading the current CTS, no harm even if CTS is ignored */
 	msm_uport->imr_reg |= UARTDM_ISR_CURRENT_CTS_BMSK;
 
-	msm_hs_write(uport, UARTDM_TFWR_ADDR, 0);  /* TXLEV on empty TX fifo */
+	msm_hs_write(uport, UARTDM_TFWR_ADDR, 4);  /* TXLEV on empty TX fifo */
 	/*
 	 * Complete all device write related configuration before
 	 * queuing RX request. Hence mb() requires here.
