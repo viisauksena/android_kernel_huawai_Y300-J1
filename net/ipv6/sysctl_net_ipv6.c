@@ -18,7 +18,7 @@
 
 static struct ctl_table empty[1];
 
-static ctl_table ipv6_static_skeleton[] = {
+static struct ctl_table ipv6_static_skeleton[] = {
 	{
 		.procname	= "neigh",
 		.maxlen		= 0,
@@ -28,7 +28,7 @@ static ctl_table ipv6_static_skeleton[] = {
 	{ }
 };
 
-static ctl_table ipv6_table_template[] = {
+static struct ctl_table ipv6_table_template[] = {
 	{
 		.procname	= "route",
 		.maxlen		= 0,
@@ -51,7 +51,7 @@ static ctl_table ipv6_table_template[] = {
 	{ }
 };
 
-static ctl_table ipv6_rotable[] = {
+static struct ctl_table ipv6_rotable[] = {
 	{
 		.procname	= "mld_max_msf",
 		.data		= &sysctl_mld_max_msf,

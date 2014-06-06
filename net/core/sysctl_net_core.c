@@ -20,12 +20,12 @@
 #include <net/net_ratelimit.h>
 
 #ifdef CONFIG_RPS
-static int rps_sock_flow_sysctl(ctl_table *table, int write,
+static int rps_sock_flow_sysctl(struct ctl_table *table, int write,
 				void __user *buffer, size_t *lenp, loff_t *ppos)
 {
 	unsigned int orig_size, size;
 	int ret, i;
-	ctl_table tmp = {
+	struct ctl_table tmp = {
 		.data = &size,
 		.maxlen = sizeof(size),
 		.mode = table->mode

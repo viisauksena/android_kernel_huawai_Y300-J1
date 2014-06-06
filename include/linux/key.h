@@ -300,7 +300,7 @@ static inline bool key_is_instantiated(const struct key *key)
 	(rcu_assign_pointer((KEY)->payload.rcudata, PAYLOAD))
 
 #ifdef CONFIG_SYSCTL
-extern ctl_table key_sysctls[];
+extern struct ctl_table key_sysctls[];
 #endif
 
 extern void key_replace_session_keyring(void);

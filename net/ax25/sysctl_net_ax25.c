@@ -31,7 +31,7 @@ static int min_ds_timeout[1],		max_ds_timeout[] = {65535000};
 
 static struct ctl_table_header *ax25_table_header;
 
-static ctl_table *ax25_table;
+static struct ctl_table *ax25_table;
 static int ax25_table_size;
 
 static struct ctl_path ax25_path[] = {
@@ -40,7 +40,7 @@ static struct ctl_path ax25_path[] = {
 	{ }
 };
 
-static const ctl_table ax25_param_table[] = {
+static const struct ctl_table ax25_param_table[] = {
 	{
 		.procname	= "ip_default_mode",
 		.maxlen		= sizeof(int),

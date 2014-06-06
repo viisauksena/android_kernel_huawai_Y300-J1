@@ -2755,11 +2755,11 @@ EXPORT_SYMBOL(neigh_app_ns);
 
 #ifdef CONFIG_SYSCTL
 
-static int proc_unres_qlen(ctl_table *ctl, int write, void __user *buffer,
+static int proc_unres_qlen(struct ctl_table *ctl, int write, void __user *buffer,
 			   size_t *lenp, loff_t *ppos)
 {
 	int size, ret;
-	ctl_table tmp = *ctl;
+	struct ctl_table tmp = *ctl;
 
 	tmp.data = &size;
 	size = DIV_ROUND_UP(*(int *)ctl->data, SKB_TRUESIZE(ETH_FRAME_LEN));
