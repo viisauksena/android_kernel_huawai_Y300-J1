@@ -192,11 +192,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
-ifeq ($(CONFIG_ARM),y)
-	ARCH	:= arm
-else
-	ARCH	?= $(SUBARCH)
-endif
+ARCH		?= $(SUBARCH)
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h
@@ -330,6 +326,8 @@ MAKEFLAGS += --include-dir=$(srctree)
 $(srctree)/scripts/Kbuild.include: ;
 include $(srctree)/scripts/Kbuild.include
 
+# Make variables (CC, etc...)
+
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
 REAL_CC		= $(CROSS_COMPILE)gcc
@@ -356,9 +354,9 @@ CHECK		= sparse
 #----------------------[ General Setup ]--------------------------------#
 ARM_ARCH	:= -march=armv7-a
 ARM_CPU		:= -mcpu=cortex-a5
-#ARM_MTUNE	:= -mtune=cortex-a5
-ARM_FLOAT_ABI	:= -mfloat-abi=soft
-#ARM_FPU		:= -mfpu=vfpv4-d16
+ARM_MTUNE	:= -mtune=cortex-a5
+#ARM_FLOAT_ABI	:= -mfloat-abi=soft
+#ARM_FPU		:= -mfpu=neon
 #----------------------[ Setup: GCC error handling ]--------------------#
 ARM_CC_FLAGS	+= -Wno-maybe-uninitialized
 #ARM_CC_FLAGS	+= -Wno-array-bounds
@@ -385,34 +383,35 @@ ARM_CC_FLAGS	+= -Wno-maybe-uninitialized
 
 #ARM_CC_FLAGS	+= -mapcs \
 #		   -mabi=aapcs-linux
+ARM_CC_FLAGS	+= -ftree-vectorize
 
 ARM_CC_FLAGS	+= $(ARM_ARCH)
 ARM_CC_FLAGS	+= $(ARM_CPU)
 #ARM_CC_FLAGS	+= $(ARM_FPU)
-ARM_CC_FLAGS	+= $(ARM_FLOAT_ABI)
-#ARM_CC_FLAGS	+= $(ARM_MTUNE)
+#ARM_CC_FLAGS	+= $(ARM_FLOAT_ABI)
+ARM_CC_FLAGS	+= $(ARM_MTUNE)
 #----------------------[ Setup: ASSEMBLER ]-----------------------------#
 #ARM_CC_FLAGS	+= -Wa,$(ARM_ARCH)
 #ARM_CC_FLAGS	+= -Wa,$(ARM_CPU)
 #ARM_CC_FLAGS	+= -Wa,$(ARM_FPU)
 #ARM_CC_FLAGS	+= -Wa,$(ARM_FLOAT_ABI)
 
-ARM_AS_FLAGS	 += $(ARM_ARCH)
-ARM_AS_FLAGS	 += $(ARM_CPU)
+#ARM_AS_FLAGS	 += $(ARM_ARCH)
+#ARM_AS_FLAGS	 += $(ARM_CPU)
 #ARM_AS_FLAGS	 += $(ARM_FPU)
-ARM_AS_FLAGS	 += $(ARM_FLOAT_ABI)
+#ARM_AS_FLAGS	 += $(ARM_FLOAT_ABI)
 #----------------------[ Setup: ASSEMBLER ]-----------------------------#
-REAL_CC		+= $(ARM_CC_FLAGS)
-AS		+= $(ARM_AS_FLAGS)
+#REAL_CC		+= $(ARM_CC_FLAGS)
+#AS		+= $(ARM_AS_FLAGS)
 #-----------------------------------------------------------------------#
 export	ARM_ARCH ARM_CPU ARM_MTUNE ARM_FLOAT_ABI ARM_FPU
 export	ARM_CC_FLAGS ARM_AS_FLAGS
 #-----------------------------------------------------------------------#
 # Custom Wrapper (ccache,...)
-CC_WRAPPER	:= ccache
+CC_WRAPPER	:=
 
-ifeq("USE_CCACHE","1")
-  CC_WRAPPER	+= ccache
+ifeq ($(USE_CCACHE),1)
+CC_WRAPPER	+= ccache
 endif
 #-----------------------------------------------------------------------#
 # Use the wrapper for the compiler.  This wrapper scans for new
@@ -445,7 +444,8 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks \
+		   $(ARM_CC_FLAGS)
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
