@@ -51,7 +51,8 @@ struct QMI_QOS_HDR_S {
 	unsigned long    flow_id;
 };
 
-#ifdef CONFIG_HUAWEI_KERNEL
+#if 0
+//#ifdef CONFIG_HUAWEI_KERNEL
 /*
  * if there have special requirement need to apply.
  */
