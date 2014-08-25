@@ -241,7 +241,7 @@ struct platform_device msm7x27aa_device_acpuclk = {
 
 static struct acpuclk_pdata msm8625_acpuclk_pdata = {
 	/* TODO: Need to update speed delta from H/w Team */
-	.max_speed_delta_khz = 604800,
+	.max_speed_delta_khz = 709000,
 };
 
 static struct acpuclk_pdata msm8625ab_acpuclk_pdata = {
