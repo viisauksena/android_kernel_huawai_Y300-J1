@@ -43,9 +43,6 @@
 #include <mach/proc_comm.h>
 #include <asm/cacheflush.h>
 
-#ifdef CONFIG_HUAWEI_KERNEL  
-#include <linux/sched.h> 
-#endif
 #include "smd_private.h"
 #include "modem_notifier.h"
 
@@ -2664,11 +2661,6 @@ static irqreturn_t smsm_irq_handler(int irq, void *data)
 			modem_queue_start_reset_notify();
 
 		} else if (modm & SMSM_RESET) {
-#ifdef CONFIG_HUAWEI_KERNEL              
-            /* merge rpc debug code to analyse rpc crash */
-			show_state_filter(TASK_UNINTERRUPTIBLE);
-#endif             
-           
 			pr_err("\nSMSM: Modem SMSM state changed to SMSM_RESET.");
 			if (!disable_smsm_reset_handshake) {
 				apps |= SMSM_RESET;
