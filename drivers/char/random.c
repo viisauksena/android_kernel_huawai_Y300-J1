@@ -655,15 +655,12 @@ retry:
 		goto retry;
 
 	r->entropy_total += nbits;
-	if (!r->initialized && nbits > 0) {
-		if (r->entropy_total > 128) {
-			if (r == &nonblocking_pool) {
-				prandom_reseed_late();
-				pr_notice("random: %s pool is initialized\n",
-					  r->name);
-			}
-			r->initialized = 1;
-			r->entropy_total = 0;
+	if (!r->initialized && r->entropy_total > 128) {
+		r->initialized = 1;
+		r->entropy_total = 0;
+		if (r == &nonblocking_pool) {
+			prandom_reseed_late();
+			pr_notice("random: %s pool is initialized\n", r->name);
 		}
 	}
 
@@ -850,6 +847,8 @@ void add_interrupt_randomness(int irq, int irq_flags)
 	cycles_t		cycles = random_get_entropy();
 	__u32			input[4], c_high, j_high;
 	__u64			ip;
+	unsigned long		seed;
+	int			credit;
 
 	c_high = (sizeof(cycles) > 4) ? cycles >> 32 : 0;
 	j_high = (sizeof(now) > 4) ? now >> 32 : 0;
@@ -868,20 +867,33 @@ void add_interrupt_randomness(int irq, int irq_flags)
 
 	r = nonblocking_pool.initialized ? &input_pool : &nonblocking_pool;
 	__mix_pool_bytes(r, &fast_pool->pool, sizeof(fast_pool->pool), NULL);
+
 	/*
 	 * If we don't have a valid cycle counter, and we see
 	 * back-to-back timer interrupts, then skip giving credit for
-	 * any entropy.
+	 * any entropy, otherwise credit 1 bit.
 	 */
+	credit = 1;
 	if (cycles == 0) {
 		if (irq_flags & __IRQF_TIMER) {
 			if (fast_pool->last_timer_intr)
-				return;
+				credit = 0;
 			fast_pool->last_timer_intr = 1;
 		} else
 			fast_pool->last_timer_intr = 0;
 	}
-	credit_entropy_bits(r, 1);
+
+	/*
+	 * If we have architectural seed generator, produce a seed and
+	 * add it to the pool.  For the sake of paranoia count it as
+	 * 50% entropic.
+	 */
+	if (arch_get_random_seed_long(&seed)) {
+		__mix_pool_bytes(r, &seed, sizeof(seed), NULL);
+		credit += sizeof(seed) * 4;
+	}
+
+	credit_entropy_bits(r, credit);
 }
 
 #ifdef CONFIG_BLOCK
@@ -1022,22 +1034,22 @@ static void extract_buf(struct entropy_store *r, __u8 *out)
 	__u8 extract[64];
 	unsigned long flags;
 
-	/* Generate a hash across the pool, 16 words (512 bits) at a time */
-	sha_init(hash.w);
-	spin_lock_irqsave(&r->lock, flags);
-	for (i = 0; i < r->poolinfo->poolwords; i += 16)
-		sha_transform(hash.w, (__u8 *)(r->pool + i), workspace);
-
 	/*
 	 * If we have an architectural hardware random number
-	 * generator, mix that in, too.
+	 * generator, use it for SHA's initial vector
 	 */
+	sha_init(hash.w);
 	for (i = 0; i < LONGS(20); i++) {
 		unsigned long v;
 		if (!arch_get_random_long(&v))
 			break;
-		hash.l[i] ^= v;
+		hash.l[i] = v;
 	}
+
+	/* Generate a hash across the pool, 16 words (512 bits) at a time */
+	spin_lock_irqsave(&r->lock, flags);
+	for (i = 0; i < r->poolinfo->poolwords; i += 16)
+		sha_transform(hash.w, (__u8 *)(r->pool + i), workspace);
 
 	/*
 	 * We mix the hash back into the pool to prevent backtracking
@@ -1288,6 +1300,37 @@ void rand_initialize_disk(struct gendisk *disk)
 }
 #endif
 
+/*
+ * Attempt an emergency refill using arch_get_random_seed_long().
+ *
+ * As with add_interrupt_randomness() be paranoid and only
+ * credit the output as 50% entropic.
+ */
+static int arch_random_refill(void)
+{
+	const unsigned int nlongs = 64;	/* Arbitrary number */
+	unsigned int n = 0;
+	unsigned int i;
+	unsigned long buf[nlongs];
+
+	if (!arch_has_random_seed())
+		return 0;
+
+	for (i = 0; i < nlongs; i++) {
+		if (arch_get_random_seed_long(&buf[n]))
+			n++;
+	}
+
+	if (n) {
+		unsigned int rand_bytes = n * sizeof(unsigned long);
+
+		mix_pool_bytes(&input_pool, buf, rand_bytes, NULL);
+		credit_entropy_bits(&input_pool, rand_bytes*4);
+	}
+
+	return n;
+}
+
 static ssize_t
 random_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
 {
@@ -1306,7 +1349,12 @@ random_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
 				  ENTROPY_BITS(&input_pool));
 		if (n > 0)
 			return n;
+
 		/* Pool is (near) empty.  Maybe wait and retry. */
+
+		/* First try an emergency refill */
+		if (arch_random_refill())
+			continue;
 
 		if (file->f_flags & O_NONBLOCK)
 			return -EAGAIN;
@@ -1623,7 +1671,7 @@ int random_int_secret_init(void)
  * value is not cryptographically secure but for several uses the cost of
  * depleting entropy is too high
  */
-DEFINE_PER_CPU(__u32 [MD5_DIGEST_WORDS], get_random_int_hash);
+static DEFINE_PER_CPU(__u32 [MD5_DIGEST_WORDS], get_random_int_hash);
 unsigned int get_random_int(void)
 {
 	__u32 *hash;
@@ -1641,6 +1689,7 @@ unsigned int get_random_int(void)
 
 	return ret;
 }
+EXPORT_SYMBOL(get_random_int);
 
 /*
  * randomize_range() returns a start address such that
