@@ -1409,6 +1409,7 @@ static int proc_do_uuid(struct ctl_table *table, int write,
 }
 
 static int sysctl_poolsize = INPUT_POOL_WORDS * 32;
+extern struct ctl_table random_table[];
 struct ctl_table random_table[] = {
 	{
 		.procname	= "poolsize",
