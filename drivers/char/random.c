@@ -1187,13 +1187,14 @@ static ssize_t extract_entropy_user(struct entropy_store *r, void __user *buf,
 {
 	ssize_t ret = 0, i;
 	__u8 tmp[EXTRACT_SIZE];
+	int large_request = (nbytes > 256);
 
 	trace_extract_entropy_user(r->name, nbytes, ENTROPY_BITS(r), _RET_IP_);
 	xfer_secondary_pool(r, nbytes);
 	nbytes = account(r, nbytes, 0, 0);
 
 	while (nbytes) {
-		if (need_resched()) {
+		if (large_request && need_resched()) {
 			if (signal_pending(current)) {
 				if (ret == 0)
 					ret = -ERESTARTSYS;
