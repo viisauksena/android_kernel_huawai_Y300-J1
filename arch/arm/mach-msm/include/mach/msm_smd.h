@@ -345,6 +345,8 @@ int smd_module_init_notifier_unregister(struct notifier_block *nb);
  */
 int __init msm_smd_init(void);
 
+bool smem_initialized_check(void);
+
 #else
 
 static inline int smd_open(const char *name, smd_channel_t **ch, void *priv,
@@ -483,6 +485,11 @@ static inline int smd_module_init_notifier_unregister(struct notifier_block *nb)
 }
 
 static inline int __init msm_smd_init(void)
+{
+	return 0;
+}
+
+static inline bool smem_initialized_check(void);
 {
 	return 0;
 }

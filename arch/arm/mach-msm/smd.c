@@ -66,6 +66,8 @@
 #endif
 
 #define MODULE_NAME "msm_smd"
+#define MODEM_SBL_VERSION_INDEX 7
+#define SMEM_VERSION_INFO_SIZE (32 * 4)
 #define SMEM_VERSION 0x000B
 #define SMD_VERSION 0x00020000
 #define SMSM_SNAPSHOT_CNT 64
@@ -371,6 +373,7 @@ static struct workqueue_struct *smsm_cb_wq;
 static void notify_smsm_cb_clients_worker(struct work_struct *work);
 static DECLARE_WORK(smsm_cb_work, notify_smsm_cb_clients_worker);
 static DEFINE_MUTEX(smsm_lock);
+static DEFINE_SPINLOCK(smem_init_check_lock);
 static struct smsm_state_info *smsm_states;
 static int spinlocks_initialized;
 
@@ -2475,10 +2478,8 @@ void *smem_alloc2(unsigned id, unsigned size_in)
 	unsigned long flags;
 	void *ret = NULL;
 
-	if (!shared->heap_info.initialized) {
-		pr_err("%s: smem heap info not initialized\n", __func__);
+	if (!smem_initialized_check())
 		return NULL;
-	}
 
 	if (id >= SMEM_NUM_ITEMS)
 		return NULL;
@@ -2514,13 +2515,16 @@ void *smem_alloc2(unsigned id, unsigned size_in)
 }
 EXPORT_SYMBOL(smem_alloc2);
 
-void *smem_get_entry(unsigned id, unsigned *size)
+static void *__smem_get_entry(unsigned id, unsigned *size, bool skip_init_check)
 {
 	struct smem_shared *shared = (void *) MSM_SHARED_RAM_BASE;
 	struct smem_heap_entry *toc = shared->heap_toc;
 	int use_spinlocks = spinlocks_initialized;
 	void *ret = 0;
 	unsigned long flags = 0;
+
+	if (!skip_init_check && !smem_initialized_check())
+		return ret;
 
 	if (id >= SMEM_NUM_ITEMS)
 		return ret;
@@ -2545,14 +2549,13 @@ void *smem_get_entry(unsigned id, unsigned *size)
 
 	return ret;
 }
-EXPORT_SYMBOL(smem_get_entry);
 
-void *smem_find(unsigned id, unsigned size_in)
+static void *__smem_find(unsigned id, unsigned size_in, bool skip_init_check)
 {
 	unsigned size;
 	void *ptr;
 
-	ptr = smem_get_entry(id, &size);
+	ptr = __smem_get_entry(id, &size, skip_init_check);
 	if (!ptr)
 		return 0;
 
@@ -2565,7 +2568,18 @@ void *smem_find(unsigned id, unsigned size_in)
 
 	return ptr;
 }
+
+void *smem_find(unsigned id, unsigned size_in)
+{
+	return __smem_find(id, size_in, false);
+}
 EXPORT_SYMBOL(smem_find);
+
+void *smem_get_entry(unsigned id, unsigned *size)
+{
+	return __smem_get_entry(id, size, false);
+}
+EXPORT_SYMBOL(smem_get_entry);
 
 static int smsm_cb_init(void)
 {
@@ -3599,6 +3613,9 @@ static int __devinit msm_smd_probe(struct platform_device *pdev)
 {
 	int ret;
 
+	if (!smem_initialized_check())
+		return -ENODEV;
+
 	SMD_INFO("smd probe\n");
 	INIT_WORK(&probe_work, smd_channel_probe_worker);
 
@@ -3644,6 +3661,62 @@ static int __devinit msm_smd_probe(struct platform_device *pdev)
 
 	return 0;
 }
+
+/**
+ * smem_initialized_check - Reentrant check that smem has been initialized
+ *
+ * @returns: true if initialized, false if not.
+ */
+bool smem_initialized_check(void)
+{
+	static int checked;
+	static int is_inited;
+	unsigned long flags;
+	struct smem_shared *smem;
+	int *version_array;
+
+	if (likely(checked)) {
+		if (unlikely(!is_inited))
+			pr_err("%s: smem not initialized\n", __func__);
+		return is_inited;
+	}
+
+	spin_lock_irqsave(&smem_init_check_lock, flags);
+	if (likely(checked)) {
+		spin_unlock_irqrestore(&smem_init_check_lock, flags);
+		if (unlikely(!is_inited))
+			pr_err("%s: smem not initialized\n", __func__);
+		return is_inited;
+	}
+
+	smem = (void *)MSM_SHARED_RAM_BASE;
+
+	if (smem->heap_info.initialized != 1)
+		goto failed;
+	if (smem->heap_info.reserved != 0)
+		goto failed;
+
+	version_array = __smem_find(SMEM_VERSION_INFO, SMEM_VERSION_INFO_SIZE,
+	true);
+	if (version_array == NULL)
+		goto failed;
+	if (version_array[MODEM_SBL_VERSION_INDEX] != SMEM_VERSION << 16)
+		goto failed;
+
+	is_inited = 1;
+	checked = 1;
+	spin_unlock_irqrestore(&smem_init_check_lock, flags);
+	return is_inited;
+
+ failed:
+	is_inited = 0;
+	checked = 1;
+	spin_unlock_irqrestore(&smem_init_check_lock, flags);
+	pr_err("%s: bootloader failure detected, shared memory not inited\n",
+	__func__);
+	return is_inited;
+}
+EXPORT_SYMBOL(smem_initialized_check);
 
 static int restart_notifier_cb(struct notifier_block *this,
 				  unsigned long code,
