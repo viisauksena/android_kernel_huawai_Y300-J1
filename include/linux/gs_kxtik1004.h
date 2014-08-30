@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  *
  */
+#include <linux/types.h>
 
 #ifndef __KXTIK_H__
 #define __KXTIK_H__

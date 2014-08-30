@@ -13,34 +13,16 @@
  * GNU General Public License for more details.
  *
  */
-
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/earlysuspend.h>
-#include <linux/hrtimer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/miscdevice.h>
-#include <asm/uaccess.h>
-#include <linux/slab.h>
-
 #include <linux/gs_kxtik1004.h>
-#include "linux/hardware_self_adapt.h"
 
-#ifdef CONFIG_HUAWEI_HW_DEV_DCT
-#include <linux/hw_dev_dec.h>
-#endif
-#include <linux/sensors.h>
+#include <huawei/hw_common.h>
+
 #ifdef GS_DEBUG
-#define GS_DEBUG(fmt, args...) printk(KERN_ERR fmt, ##args)
+# define GS_DEBUG(fmt, args...) printk(KERN_ERR fmt, ##args)
 #else
-#define GS_DEBUG(fmt, args...)
+# define GS_DEBUG(fmt, args...)
 #endif
+
 /*DBG */
 /*This is the classcial Delay_time from framework and the units is ms*/
 #define DELAY_FASTEST  10
@@ -73,7 +55,6 @@ module_param_named(kxtik_debug, kxtik_debug_mask, int, S_IRUGO | S_IWUSR | S_IWG
 #define GS_POLLING   1
 
 static struct workqueue_struct *gs_wq;
-extern struct input_dev *sensor_dev;
 
 struct gs_data {
 	uint16_t addr; 

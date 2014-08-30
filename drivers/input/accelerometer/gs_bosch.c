@@ -13,31 +13,10 @@
  *
  */
 
-
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/earlysuspend.h>
-#include <linux/hrtimer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/miscdevice.h>
-#include <asm/uaccess.h>
-#include "linux/hardware_self_adapt.h"
-#include <linux/slab.h>
-#include <mach/vreg.h>
-
-#ifdef CONFIG_HUAWEI_HW_DEV_DCT
-#include <linux/hw_dev_dec.h>
-#endif
+#include <huawei/hw_common.h>
 
 //#define GS_DEBUG
 //#undef GS_DEBUG 
-
 #ifdef GS_DEBUG
 #define GS_DEBUG(fmt, args...) printk(KERN_ERR fmt, ##args)
 #else
@@ -156,7 +135,6 @@ static struct workqueue_struct *gs_wq;
 static signed short compass_sensor_data[3];
 static char gs_device_id[] = BMA250_DRV_NAME;
 
-extern struct input_dev *sensor_dev;
 #ifdef CONFIG_MELFAS_UPDATE_TS_FIRMWARE
 extern struct gs_data *TS_updateFW_gs_data;
 #endif
@@ -758,7 +736,8 @@ static int gs_resume(struct i2c_client *client)
 {
 	struct gs_data *gs = i2c_get_clientdata(client);
 	
-	bma250_set_mode(MODE_NORMAL); 	
+	bma250_set_mode(MODE_NORMAL); 
+	
 	if (!gs->use_irq)
 		hrtimer_start(&gs->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 	else

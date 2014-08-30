@@ -12,29 +12,8 @@
  * GNU General Public License for more details.
  *
  */
+#include <huawei/hw_common.h>
 
-
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/earlysuspend.h>
-#include <linux/hrtimer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/miscdevice.h>
-#include <asm/uaccess.h>
-#include "linux/hardware_self_adapt.h"
-#include <linux/slab.h>
-#include <mach/vreg.h>
-
-#ifdef CONFIG_HUAWEI_HW_DEV_DCT
-#include <linux/hw_dev_dec.h>
-#endif
-#include <linux/sensors.h>
 //#define GS_DEBUG
 //#undef GS_DEBUG 
 
@@ -173,7 +152,6 @@ static struct workqueue_struct *gs_wq;
 static signed short compass_sensor_data[3];
 static char gs_device_id[] = MMA8452_DRV_NAME;
 
-extern struct input_dev *sensor_dev;
 static atomic_t mma_status_flag;
 #ifdef CONFIG_MELFAS_UPDATE_TS_FIRMWARE
 extern struct gs_data *TS_updateFW_gs_data;

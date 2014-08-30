@@ -14,38 +14,16 @@
  * GNU General Public License for more details.
  *
  */
-
-
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/earlysuspend.h>
-#include <linux/hrtimer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/miscdevice.h>
-#include <asm/uaccess.h>
-#include <linux/slab.h>
-#include <mach/vreg.h>
-
 #include <linux/gs_st_lis3xh.h>
-#include "linux/hardware_self_adapt.h"
 
-#ifdef CONFIG_HUAWEI_HW_DEV_DCT
-#include <linux/hw_dev_dec.h>
-#endif
-#include <linux/sensors.h>
+#include <huawei/hw_common.h>
+
 //#define GS_DEBUG
 //#undef GS_DEBUG 
-
 #ifdef GS_DEBUG
-#define GS_DEBUG(fmt, args...) printk(KERN_ERR fmt, ##args)
+# define GS_DEBUG(fmt, args...) printk(KERN_ERR fmt, ##args)
 #else
-#define GS_DEBUG(fmt, args...)
+# define GS_DEBUG(fmt, args...)
 #endif
 
 #define GS_POLLING   1
@@ -80,7 +58,6 @@ static const struct {
 	{ DELAY_ERROR,   ODR10F},
 };
 static struct workqueue_struct *gs_wq;
-extern struct input_dev *sensor_dev;
 static atomic_t st_status_flag;
 
 struct gs_data {

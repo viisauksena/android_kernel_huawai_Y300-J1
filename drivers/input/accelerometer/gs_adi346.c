@@ -12,34 +12,12 @@
  * GNU General Public License for more details.
  *
  */
-
-
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/earlysuspend.h>
-#include <linux/hrtimer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/miscdevice.h>
-#include <asm/uaccess.h>
-#include "linux/hardware_self_adapt.h"
-#include <linux/slab.h>
-#include <mach/vreg.h>
-
 #include <linux/gs_adxl345.h>
 
-#ifdef CONFIG_HUAWEI_HW_DEV_DCT
-#include <linux/hw_dev_dec.h>
-#endif
-#include <linux/sensors.h>
+#include <huawei/hw_common.h>
+
 //#define ENABLE_GS_DEBUG
 //#undef ENABLE_GS_DEBUG
-
 #ifdef ENABLE_GS_DEBUG
 #define GS_DEBUG(fmt, args...) printk(KERN_ERR fmt, ##args)
 #else
@@ -182,8 +160,6 @@ static struct gs_data  *this_gs_data;
 static struct workqueue_struct *gs_wq;
 static signed short st_sensor_data[3];
 static char gs_device_id[] = ADI346_DRV_NAME;
-
-struct input_dev *sensor_dev = NULL;
 
 static int accel_delay = GS_ST_TIMRER;     /*1s*/
 

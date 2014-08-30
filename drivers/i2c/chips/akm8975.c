@@ -18,27 +18,12 @@
  * Revised by AKM 2010/11/15
  *
  */
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
-#include <linux/miscdevice.h>
-#include <linux/gpio.h>
-#include <linux/uaccess.h>
-#include <linux/delay.h>
-#include <linux/input.h>
-#include <linux/workqueue.h>
-#include <linux/freezer.h>
 #include <linux/akm8975.h>
-#include <linux/earlysuspend.h>
-#include <mach/vreg.h>
-#include <linux/sensors.h>
-#include "linux/hardware_self_adapt.h"
+#include <linux/freezer.h>
 #include <linux/gpio_event.h>
-#ifdef CONFIG_HUAWEI_HW_DEV_DCT
-#include <linux/hw_dev_dec.h>
-#endif
+#include <linux/irq.h>
+
+#include <huawei/hw_common.h>
 
 #define AKM8975_DEBUG		1
 #define AKM8975_DEBUG_MSG	1
@@ -82,8 +67,6 @@ struct akm8975_data {
 	struct work_struct work;
 	struct early_suspend akm_early_suspend;
 };
-
-extern struct input_dev *sensor_dev;
 
 /* Addresses to scan -- protected by sense_data_mutex */
 static char sense_data[SENSOR_DATA_SIZE];
